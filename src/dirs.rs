@@ -80,7 +80,7 @@ impl InstallDirs {
         }
     }
 
-    pub fn with_project_name<S: AsRef<OsStr>>(name: &S) -> Self {
+    pub fn with_project_name<S: AsRef<OsStr>+?Sized>(name: &S) -> Self {
         Self {
             prefix: if cfg!(windows) {
                 let mut buf = PathBuf::new();
@@ -347,6 +347,18 @@ impl InstallDirs {
 
             Ok(self)
         }
+    }
+
+    pub fn canonicalize_dir<S: AsRef<OsStr>+?Sized,T: Into<PathBuf>>(base: &S,dir: T)->PathBuf{
+        let mut dir = dir.into();
+        if !dir.has_root(){
+             dir = {
+                let mut path = PathBuf::from(base);
+                path.push(dir);
+                path
+             }
+        }
+        dir
     }
 
     pub fn read_env(&mut self) {
