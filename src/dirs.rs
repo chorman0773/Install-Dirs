@@ -1,172 +1,190 @@
-use std::{error::Error, ffi::OsStr, fmt::Display, path::{Path, PathBuf}};
+use std::{
+    collections::HashMap,
+    error::Error,
+    ffi::OsStr,
+    fmt::Display,
+    path::{Path, PathBuf},
+};
 
-#[derive(Clone,Debug)]
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug)]
 #[non_exhaustive]
-pub struct InstallDirs{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(default = "InstallDirs::defaults"))]
+pub struct InstallDirs {
     pub prefix: PathBuf,
     pub exec_prefix: PathBuf,
-    pub bin: PathBuf,
-    pub sbin: PathBuf,
-    pub lib: PathBuf,
-    pub libexec: PathBuf,
-    pub include: PathBuf,
-    pub dataroot: PathBuf,
-    pub data: PathBuf,
-    pub man: PathBuf,
-    pub doc: PathBuf,
-    pub info: PathBuf,
-    pub locale: PathBuf,
-    pub localstate: PathBuf,
-    pub runstate: PathBuf,
-    pub sharedstate: PathBuf,
-    pub sysconf: PathBuf
+    pub bindir: PathBuf,
+    pub sbindir: PathBuf,
+    pub libdir: PathBuf,
+    pub libexecdir: PathBuf,
+    pub includedir: PathBuf,
+    pub datarootdir: PathBuf,
+    pub datadir: PathBuf,
+    pub mandir: PathBuf,
+    pub docdir: PathBuf,
+    pub infodir: PathBuf,
+    pub localedir: PathBuf,
+    pub localstatedir: PathBuf,
+    pub runstatedir: PathBuf,
+    pub sharedstatedir: PathBuf,
+    pub sysconfdir: PathBuf,
 }
 
 #[derive(Debug)]
-pub struct CanonicalizationError{
-    prefix: PathBuf
+pub struct CanonicalizationError {
+    prefix: PathBuf,
 }
 
-impl Display for CanonicalizationError{
+impl Display for CanonicalizationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Failed to canonicalize Install Dirs ")?;
-        f.write_fmt(format_args!("(prefix {} is not an absolute path)",self.prefix.to_str().unwrap_or("(<non-unicode>)")))
+        f.write_fmt(format_args!(
+            "(prefix {} is not an absolute path)",
+            self.prefix.to_str().unwrap_or("(<non-unicode>)")
+        ))
     }
 }
 
-impl Error for CanonicalizationError{
-    
-}
+impl Error for CanonicalizationError {}
 
-impl InstallDirs{
-    /// 
-    /// 
-    pub fn defaults() -> Self{
-        Self{
-            prefix: if cfg!(windows){
+impl InstallDirs {
+    ///
+    ///
+    pub fn defaults() -> Self {
+        Self {
+            prefix: if cfg!(windows) {
                 "C:\\Program Files\\"
-            }else{
+            } else {
                 "/usr/local"
-            }.into(),
+            }
+            .into(),
             exec_prefix: "".into(),
-            bin: "bin".into(),
-            sbin: "sbin".into(),
-            lib: "lib".into(),
-            libexec: "libexec".into(),
-            include: "include".into(),
-            dataroot: "share".into(),
-            data: "".into(),
-            man: "man".into(),
-            doc: "doc".into(),
-            info: "info".into(),
-            locale: "locale".into(),
-            localstate: "var".into(),
-            runstate: "run".into(),
-            sharedstate: "com".into(),
-            sysconf: "var".into()
+            bindir: "bin".into(),
+            sbindir: "sbin".into(),
+            libdir: "lib".into(),
+            libexecdir: "libexec".into(),
+            includedir: "include".into(),
+            datarootdir: "share".into(),
+            datadir: "".into(),
+            mandir: "man".into(),
+            docdir: "doc".into(),
+            infodir: "info".into(),
+            localedir: "locale".into(),
+            localstatedir: "var".into(),
+            runstatedir: "run".into(),
+            sharedstatedir: "com".into(),
+            sysconfdir: "var".into(),
         }
     }
 
-    pub fn with_project_name<S: AsRef<OsStr>>(name: &S) -> Self{
-        Self{
-            prefix: if cfg!(windows){
+    pub fn with_project_name<S: AsRef<OsStr>>(name: &S) -> Self {
+        Self {
+            prefix: if cfg!(windows) {
                 let mut buf = PathBuf::new();
                 buf.push("C:\\Program Files");
                 buf.push(name.as_ref());
                 buf
-            }else{
+            } else {
                 "/usr/local".into()
             },
             exec_prefix: "".into(),
-            bin: "bin".into(),
-            sbin: "sbin".into(),
-            lib: "lib".into(),
-            libexec: "libexec".into(),
-            include: "include".into(),
-            dataroot: "share".into(),
-            data: "".into(),
-            man: "man".into(),
-            doc: {
+            bindir: "bin".into(),
+            sbindir: "sbin".into(),
+            libdir: "lib".into(),
+            libexecdir: "libexec".into(),
+            includedir: "include".into(),
+            datarootdir: "share".into(),
+            datadir: "".into(),
+            mandir: "man".into(),
+            docdir: {
                 let mut path = PathBuf::new();
                 path.push("doc");
                 path.push(name.as_ref());
                 path
             },
-            info: "info".into(),
-            locale: "locale".into(),
-            localstate: "var".into(),
-            runstate: "run".into(),
-            sharedstate: "com".into(),
-            sysconf: "var".into()
+            infodir: "info".into(),
+            localedir: "locale".into(),
+            localstatedir: "var".into(),
+            runstatedir: "run".into(),
+            sharedstatedir: "com".into(),
+            sysconfdir: "var".into(),
         }
     }
 
-    pub fn with_exec_target<S: AsRef<OsStr>>(target: &S) -> Self{
-        Self{
-            prefix: if cfg!(windows){
+    pub fn with_exec_target<S: AsRef<OsStr>>(target: &S) -> Self {
+        Self {
+            prefix: if cfg!(windows) {
                 "C:\\Program Files\\"
-            }else{
+            } else {
                 "/usr/local"
-            }.into(),
+            }
+            .into(),
             exec_prefix: target.as_ref().into(),
-            bin: "bin".into(),
-            sbin: "sbin".into(),
-            lib: "lib".into(),
-            libexec: "libexec".into(),
-            include: "include".into(),
-            dataroot: "share".into(),
-            data: "".into(),
-            man: "man".into(),
-            doc: "doc".into(),
-            info: "info".into(),
-            locale: "locale".into(),
-            localstate: "var".into(),
-            runstate: "run".into(),
-            sharedstate: "com".into(),
-            sysconf: "var".into()
+            bindir: "bin".into(),
+            sbindir: "sbin".into(),
+            libdir: "lib".into(),
+            libexecdir: "libexec".into(),
+            includedir: "include".into(),
+            datarootdir: "share".into(),
+            datadir: "".into(),
+            mandir: "man".into(),
+            docdir: "doc".into(),
+            infodir: "info".into(),
+            localedir: "locale".into(),
+            localstatedir: "var".into(),
+            runstatedir: "run".into(),
+            sharedstatedir: "com".into(),
+            sysconfdir: "var".into(),
         }
     }
 
-    pub fn with_project_name_and_target<S: AsRef<OsStr>,T: AsRef<OsStr>>(name: &S,target: &T) -> Self{
-        Self{
-            prefix: if cfg!(windows){
+    pub fn with_project_name_and_target<S: AsRef<OsStr>, T: AsRef<OsStr>>(
+        name: &S,
+        target: &T,
+    ) -> Self {
+        Self {
+            prefix: if cfg!(windows) {
                 let mut buf = PathBuf::new();
                 buf.push("C:\\Program Files");
                 buf.push(name.as_ref());
                 buf
-            }else{
+            } else {
                 "/usr/local".into()
             },
             exec_prefix: target.as_ref().into(),
-            bin: "bin".into(),
-            sbin: "sbin".into(),
-            lib: "lib".into(),
-            libexec: "libexec".into(),
-            include: "include".into(),
-            dataroot: "share".into(),
-            data: "".into(),
-            man: "man".into(),
-            doc: {
+            bindir: "bin".into(),
+            sbindir: "sbin".into(),
+            libdir: "lib".into(),
+            libexecdir: "libexec".into(),
+            includedir: "include".into(),
+            datarootdir: "share".into(),
+            datadir: "".into(),
+            mandir: "man".into(),
+            docdir: {
                 let mut path = PathBuf::new();
                 path.push("doc");
                 path.push(name.as_ref());
                 path
             },
-            info: "info".into(),
-            locale: "locale".into(),
-            localstate: "var".into(),
-            runstate: "run".into(),
-            sharedstate: "com".into(),
-            sysconf: "var".into()
+            infodir: "info".into(),
+            localedir: "locale".into(),
+            localstatedir: "var".into(),
+            runstatedir: "run".into(),
+            sharedstatedir: "com".into(),
+            sysconfdir: "var".into(),
         }
     }
 
-    pub fn canonicalize(mut self) -> Result<Self,CanonicalizationError>{
-        if !self.prefix.has_root(){
-            Err(CanonicalizationError{prefix: self.prefix})
-        }else{
-
-            if !self.exec_prefix.has_root(){
+    pub fn canonicalize(mut self) -> Result<Self, CanonicalizationError> {
+        if !self.prefix.has_root() {
+            Err(CanonicalizationError {
+                prefix: self.prefix,
+            })
+        } else {
+            if !self.exec_prefix.has_root() {
                 self.exec_prefix = {
                     let mut path = PathBuf::new();
                     path.push(self.prefix.clone());
@@ -175,155 +193,154 @@ impl InstallDirs{
                 }
             }
 
-            let exec_prefix = if (&*self.exec_prefix)==Path::new("/"){
+            let exec_prefix = if (&*self.exec_prefix) == Path::new("/") {
                 let mut exec_prefix = PathBuf::new();
                 exec_prefix.push("/usr");
                 exec_prefix
-            }else{
+            } else {
                 self.exec_prefix.clone()
             };
-            let data_prefix = if(&*self.prefix)==Path::new("/"){
+            let data_prefix = if (&*self.prefix) == Path::new("/") {
                 let mut exec_prefix = PathBuf::new();
                 exec_prefix.push("/usr");
                 exec_prefix
-            }else{
+            } else {
                 self.prefix.clone()
             };
-            let state_prefix = if self.prefix.starts_with("/usr"){
+            let state_prefix = if self.prefix.starts_with("/usr") {
                 let mut prefix = PathBuf::new();
                 prefix.push("/");
                 prefix
-            }else{
+            } else {
                 self.prefix.clone()
             };
-            if !self.bin.has_root(){
-                self.bin = {
+            if !self.bindir.has_root() {
+                self.bindir = {
                     let mut path = exec_prefix.clone();
-                    path.push(self.bin);
+                    path.push(self.bindir);
                     path
                 };
             }
 
-            if !self.sbin.has_root(){
-                self.sbin = {
+            if !self.sbindir.has_root() {
+                self.sbindir = {
                     let mut path = exec_prefix.clone();
-                    path.push(self.sbin);
+                    path.push(self.sbindir);
                     path
                 };
             }
 
-            if !self.lib.has_root(){
-                self.lib = {
+            if !self.libdir.has_root() {
+                self.libdir = {
                     let mut path = exec_prefix.clone();
-                    path.push(self.lib);
+                    path.push(self.libdir);
                     path
                 };
             }
 
-            if !self.libexec.has_root(){
-                self.libexec = {
+            if !self.libexecdir.has_root() {
+                self.libexecdir = {
                     let mut path = exec_prefix.clone();
-                    path.push(self.libexec);
+                    path.push(self.libexecdir);
                     path
                 };
             }
 
-            if !self.include.has_root(){
-                self.include = {
+            if !self.includedir.has_root() {
+                self.includedir = {
                     let mut path = exec_prefix.clone();
-                    path.push(self.include);
+                    path.push(self.includedir);
                     path
                 };
             }
 
-            if !self.dataroot.has_root(){
-                
-                self.dataroot = {
+            if !self.datarootdir.has_root() {
+                self.datarootdir = {
                     let mut path = data_prefix.clone();
-                    path.push(self.dataroot);
+                    path.push(self.datarootdir);
                     path
                 };
             }
 
-            if !self.data.has_root(){
-                self.data = {
-                    let mut path = self.dataroot.clone();
-                    path.push(self.data);
+            if !self.datadir.has_root() {
+                self.datadir = {
+                    let mut path = self.datarootdir.clone();
+                    path.push(self.datadir);
                     path
                 };
             }
 
-            if !self.man.has_root(){
-                self.man = {
-                    let mut path = self.dataroot.clone();
-                    path.push(self.man);
+            if !self.mandir.has_root() {
+                self.mandir = {
+                    let mut path = self.datarootdir.clone();
+                    path.push(self.mandir);
                     path
                 };
             }
 
-            if !self.info.has_root(){
-                self.info = {
-                    let mut path = self.dataroot.clone();
-                    path.push(self.info);
+            if !self.infodir.has_root() {
+                self.infodir = {
+                    let mut path = self.datarootdir.clone();
+                    path.push(self.infodir);
                     path
                 };
             }
-            if !self.doc.has_root(){
-                self.doc = {
-                    let mut path = self.dataroot.clone();
-                    path.push(self.doc);
-                    path
-                };
-            }
-
-            if !self.locale.has_root(){
-                self.locale = {
-                    let mut path = self.dataroot.clone();
-                    path.push(self.locale);
+            if !self.docdir.has_root() {
+                self.docdir = {
+                    let mut path = self.datarootdir.clone();
+                    path.push(self.docdir);
                     path
                 };
             }
 
-            if !self.sharedstate.has_root(){
-                self.sharedstate = {
+            if !self.localedir.has_root() {
+                self.localedir = {
+                    let mut path = self.datarootdir.clone();
+                    path.push(self.localedir);
+                    path
+                };
+            }
+
+            if !self.sharedstatedir.has_root() {
+                self.sharedstatedir = {
                     let mut path = data_prefix.clone();
-                    path.push(self.sharedstate);
+                    path.push(self.sharedstatedir);
                     path
                 };
             }
 
-            if !self.sysconf.has_root(){
-                self.sysconf = if state_prefix.starts_with("/opt"){
+            if !self.sysconfdir.has_root() {
+                self.sysconfdir = if state_prefix.starts_with("/opt") {
                     let mut path = PathBuf::new();
                     path.push("/");
-                    path.push(self.sysconf);
+                    path.push(self.sysconfdir);
                     path.push(state_prefix.clone());
                     path
-                }else{
+                } else {
                     let mut path = state_prefix.clone();
-                    path.push( self.sysconf);
+                    path.push(self.sysconfdir);
                     path
                 }
             }
 
-            if !self.localstate.has_root(){
-                self.localstate = if state_prefix.starts_with("/opt"){
+            if !self.localstatedir.has_root() {
+                self.localstatedir = if state_prefix.starts_with("/opt") {
                     let mut path = PathBuf::new();
                     path.push("/");
-                    path.push(self.localstate);
+                    path.push(self.localstatedir);
                     path.push(state_prefix.clone());
                     path
-                }else{
+                } else {
                     let mut path = state_prefix.clone();
-                    path.push( self.localstate);
+                    path.push(self.localstatedir);
                     path
                 }
             }
 
-            if !self.sharedstate.has_root(){
-                self.sharedstate = {
-                    let mut path = self.localstate.clone();
-                    path.push(self.sharedstate);
+            if !self.sharedstatedir.has_root() {
+                self.sharedstatedir = {
+                    let mut path = self.localstatedir.clone();
+                    path.push(self.sharedstatedir);
                     path
                 };
             }
@@ -331,237 +348,273 @@ impl InstallDirs{
             Ok(self)
         }
     }
+
+    pub fn read_env(&mut self) {
+        if let Ok(dir) = std::env::var("prefix") {
+            self.prefix = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("exec_prefix") {
+            self.exec_prefix = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("bindir") {
+            self.bindir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("libdir") {
+            self.libdir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("sbindir") {
+            self.sbindir = dir.into()
+        }
+        if let Ok(dir) = std::env::var("libexecdir") {
+            self.libexecdir = dir.into()
+        }
+        if let Ok(dir) = std::env::var("includedir") {
+            self.includedir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("datarootdir") {
+            self.datarootdir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("datadir") {
+            self.datadir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("mandir") {
+            self.mandir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("docdir") {
+            self.docdir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("infodir") {
+            self.infodir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("localedir") {
+            self.localedir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("sharedstatedir") {
+            self.sharedstatedir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("localstatedir") {
+            self.localstatedir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("runstatedir") {
+            self.runstatedir = dir.into()
+        }
+
+        if let Ok(dir) = std::env::var("sysconfdir") {
+            self.sysconfdir = dir.into()
+        }
+    }
+
+    ///
+    /// Obtains an iterator suitable for passing to [`std::process::Command::envs`].
+    /// The resulting iterator contains each field and the value of that field.
+    /// The order which the Items are encounted is unspecified
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use install_dirs::dirs::InstallDirs;
+    /// use std::process::{Command, Stdio};
+    /// let dirs = InstallDirs::defaults();
+    /// let cmd = Command::new("printenv")
+    ///     .stdin(Stdio::null())
+    ///     .stdout(Stdio::inherit())
+    ///     .stderr(Stdio::null())
+    ///     .env_clear()
+    ///     .envs(dirs.as_env())
+    ///     .spawn()
+    ///     .expect("printenv failed to start");
+    /// ```
+    pub fn as_env(&self) -> impl IntoIterator<Item = (&str, &Path)> {
+        let mut map = HashMap::new();
+        map.insert("prefix", &*self.prefix);
+        map.insert("exec_prefix", &*self.exec_prefix);
+        map.insert("bindir", &*self.bindir);
+        map.insert("sbindir", &*self.sbindir);
+        map.insert("libdir", &*self.libdir);
+        map.insert("libexecdir", &*self.libexecdir);
+        map.insert("datarootdir", &*self.datarootdir);
+        map.insert("datadir", &*self.datadir);
+        map.insert("docdir", &*self.docdir);
+        map.insert("mandir", &*self.mandir);
+        map.insert("infodir", &*self.infodir);
+        map.insert("localedir", &*self.localedir);
+        map.insert("sharedstatedir", &*self.sharedstatedir);
+        map.insert("localstatedir", &*self.localstatedir);
+        map.insert("runstatedir", &*self.runstatedir);
+        map.insert("sysconfdir", &*self.sysconfdir);
+        map
+    }
 }
 
-/// 
+///
 /// Parses the compile-time environment into an instance of InstallDirs.
 /// Note: This returns an owning structure and is not const.
 /// Likely you will want to either store this, or it's canonical representation,
 /// Inside a lazy_static!.
-/// 
+///
 /// This uses the default installation configuration, see [`InstallDirs::defaults()`]
 /// If a package name is specified as an expression, it uses the defaults for that package name, [`InstallDirs::with_project_name()`].
 #[macro_export]
-macro_rules! parse_env{
-    () => {
-        {
-            let mut dirs = InstallDirs::defaults();
-            if let Some(dir) = std::option_env!("prefix"){
-                dirs.prefix = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("exec_prefix"){
-                dirs.exec_prefix = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("bindir"){
-                dirs.bindir = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sbindir"){
-                dirs.sbindir = dir.into();
-            }
-            if let Some(dir) = std::option_env!("libdir"){
-                dirs.libdir = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("libexecdir"){
-                dirs.libexec = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("includedir"){
-                dirs.include = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("datarootdir"){
-                dirs.dataroot = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("datadir"){
-                dirs.data = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("mandir"){
-                dirs.man = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("docdir"){
-                dirs.doc = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("infodir"){
-                dirs.info = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("localedir"){
-                dirs.locale = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sharedstatedir"){
-                dirs.sharedstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("localstatedir"){
-                dirs.localstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("runstatedir"){
-                dirs.runstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sysconfdir"){
-                dirs.sysconf = dir.into();
-            }
-
-            dirs
+macro_rules! parse_env {
+    () => {{
+        let mut dirs = InstallDirs::defaults();
+        if let Some(dir) = std::option_env!("prefix") {
+            dirs.prefix = dir.into();
         }
-    };
-    ($project:expr) => {
-        {
-            let mut dirs = InstallDirs::with_project_name($project);
-            if let Some(dir) = std::option_env!("prefix"){
-                dirs.prefix = dir.into();
-            }
 
-            if let Some(dir) = std::option_env!("exec_prefix"){
-                dirs.exec_prefix = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("bindir"){
-                dirs.bindir = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sbindir"){
-                dirs.sbindir = dir.into();
-            }
-            if let Some(dir) = std::option_env!("libdir"){
-                dirs.libdir = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("libexecdir"){
-                dirs.libexec = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("includedir"){
-                dirs.include = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("datarootdir"){
-                dirs.dataroot = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("datadir"){
-                dirs.data = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("mandir"){
-                dirs.man = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("docdir"){
-                dirs.doc = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("infodir"){
-                dirs.info = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("localedir"){
-                dirs.locale = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sharedstatedir"){
-                dirs.sharedstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("localstatedir"){
-                dirs.localstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("runstatedir"){
-                dirs.runstate = dir.into();
-            }
-
-            if let Some(dir) = std::option_env!("sysconfdir"){
-                dirs.sysconf = dir.into();
-            }
-
-            dirs
+        if let Some(dir) = std::option_env!("exec_prefix") {
+            dirs.exec_prefix = dir.into();
         }
-    }
+
+        if let Some(dir) = std::option_env!("bindir") {
+            dirs.bindir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sbindir") {
+            dirs.sbindir = dir.into();
+        }
+        if let Some(dir) = std::option_env!("libdir") {
+            dirs.libdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("libexecdir") {
+            dirs.libexecdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("includedir") {
+            dirs.includedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("datarootdir") {
+            dirs.datarootdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("datadir") {
+            dirs.datadir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("mandir") {
+            dirs.mandir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("docdir") {
+            dirs.docdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("infodir") {
+            dirs.infodir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("localedir") {
+            dirs.localedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sharedstatedir") {
+            dirs.sharedstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("localstatedir") {
+            dirs.localstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("runstatedir") {
+            dirs.runstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sysconfdir") {
+            dirs.sysconfdir = dir.into();
+        }
+
+        dirs
+    }};
+    ($project:expr) => {{
+        let mut dirs = InstallDirs::with_project_name($project);
+        if let Some(dir) = std::option_env!("prefix") {
+            dirs.prefix = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("exec_prefix") {
+            dirs.exec_prefix = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("bindir") {
+            dirs.bindir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sbindir") {
+            dirs.sbindir = dir.into();
+        }
+        if let Some(dir) = std::option_env!("libdir") {
+            dirs.libdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("libexecdir") {
+            dirs.libexecdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("includedir") {
+            dirs.includedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("datarootdir") {
+            dirs.datarootdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("datadir") {
+            dirs.datadir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("mandir") {
+            dirs.mandir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("docdir") {
+            dirs.docdir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("infodir") {
+            dirs.infodir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("localedir") {
+            dirs.localedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sharedstatedir") {
+            dirs.sharedstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("localstatedir") {
+            dirs.localstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("runstatedir") {
+            dirs.runstatedir = dir.into();
+        }
+
+        if let Some(dir) = std::option_env!("sysconfdir") {
+            dirs.sysconfdir = dir.into();
+        }
+
+        dirs
+    }};
 }
 
-
-pub fn from_env() -> InstallDirs{
+pub fn from_env() -> InstallDirs {
     let mut dirs = InstallDirs::defaults();
-
-    if let Ok(dir) = std::env::var("prefix"){
-        dirs.prefix = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("exec_prefix"){
-        dirs.exec_prefix = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("bindir"){
-        dirs.bin = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("libdir"){
-        dirs.lib = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("sbindir"){
-        dirs.sbin = dir.into()
-    }
-    if let Ok(dir) = std::env::var("libexecdir"){
-        dirs.libexec = dir.into()
-    }
-    if let Ok(dir) = std::env::var("includedir"){
-        dirs.include = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("datarootdir"){
-        dirs.dataroot = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("datadir"){
-        dirs.data = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("mandir"){
-        dirs.man = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("docdir"){
-        dirs.doc = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("infodir"){
-        dirs.info = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("localedir"){
-        dirs.locale = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("sharedstatedir"){
-        dirs.sharedstate = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("localstatedir"){
-        dirs.localstate = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("runstatedir"){
-        dirs.runstate = dir.into()
-    }
-
-    if let Ok(dir) = std::env::var("sysconfdir"){
-        dirs.sysconf = dir.into()
-    }
-
-
+    dirs.read_env();
     dirs
-
 }
