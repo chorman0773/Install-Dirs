@@ -193,17 +193,11 @@ impl InstallDirs {
                 }
             }
 
-            let exec_prefix = if (&*self.exec_prefix) == Path::new("/") {
-                let mut exec_prefix = PathBuf::new();
-                exec_prefix.push("/usr");
-                exec_prefix
-            } else {
-                self.exec_prefix.clone()
-            };
+            let exec_prefix = self.exec_prefix.clone();
             let data_prefix = if (&*self.prefix) == Path::new("/") {
-                let mut exec_prefix = PathBuf::new();
-                exec_prefix.push("/usr");
-                exec_prefix
+                let mut data_prefix = PathBuf::new();
+                data_prefix.push("/usr");
+                data_prefix
             } else {
                 self.prefix.clone()
             };
