@@ -1,6 +1,6 @@
 [package]
 name = "install-dirs"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Connor Horman <chorman64@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -11,5 +11,8 @@ Library for handling gnu install directories in rust
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+
+
 [dependencies]
-serde = {optional = true,version="1.0.123",features=["derive"]}
+serde = {optional = true,version="1.0.123, <=1.0.171",features=["derive"]}
