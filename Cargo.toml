@@ -15,4 +15,4 @@ Library for handling gnu install directories in rust
 
 
 [dependencies]
-serde = {optional = true,version="1.0.123, <=1.0.171",features=["derive"]}
+serde = {optional = true,version="1.0.123, <=1.0.171"}

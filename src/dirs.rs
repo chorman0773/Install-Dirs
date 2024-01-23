@@ -7,12 +7,12 @@ use std::{
 };
 
 #[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
+mod serde;
 
+///
+/// Struct containing all known Install directories
 #[derive(Clone, Debug)]
 #[non_exhaustive]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(default = "InstallDirs::defaults"))]
 pub struct InstallDirs {
     pub prefix: PathBuf,
     pub exec_prefix: PathBuf,
@@ -43,7 +43,7 @@ impl Display for CanonicalizationError {
         f.write_str("Failed to canonicalize Install Dirs ")?;
         f.write_fmt(format_args!(
             "(prefix {} is not an absolute path)",
-            self.prefix.to_str().unwrap_or("(<non-unicode>)")
+            self.prefix.display()
         ))
     }
 }
@@ -76,11 +76,11 @@ impl InstallDirs {
             localstatedir: "var".into(),
             runstatedir: "run".into(),
             sharedstatedir: "com".into(),
-            sysconfdir: "var".into(),
+            sysconfdir: "etc".into(),
         }
     }
 
-    pub fn with_project_name<S: AsRef<OsStr>+?Sized>(name: &S) -> Self {
+    pub fn with_project_name<S: AsRef<OsStr> + ?Sized>(name: &S) -> Self {
         Self {
             prefix: if cfg!(windows) {
                 let mut buf = PathBuf::new();
@@ -110,7 +110,7 @@ impl InstallDirs {
             localstatedir: "var".into(),
             runstatedir: "run".into(),
             sharedstatedir: "com".into(),
-            sysconfdir: "var".into(),
+            sysconfdir: "etc".into(),
         }
     }
 
@@ -137,7 +137,7 @@ impl InstallDirs {
             localstatedir: "var".into(),
             runstatedir: "run".into(),
             sharedstatedir: "com".into(),
-            sysconfdir: "var".into(),
+            sysconfdir: "etc".into(),
         }
     }
 
@@ -174,8 +174,41 @@ impl InstallDirs {
             localstatedir: "var".into(),
             runstatedir: "run".into(),
             sharedstatedir: "com".into(),
-            sysconfdir: "var".into(),
+            sysconfdir: "etc".into(),
         }
+    }
+
+    pub fn set_project_name<S: AsRef<OsStr> + ?Sized>(&mut self, name: &S) {
+        if cfg!(windows) {
+            self.prefix.push(name.as_ref());
+        }
+
+        self.docdir.push(name.as_ref());
+    }
+
+    pub fn set_from_arg(&mut self, key: &str, val: String) -> Result<(), ()> {
+        match key {
+            "--prefix" => self.prefix = PathBuf::from(val),
+            "--exec-prefix" => self.exec_prefix = PathBuf::from(val),
+            "--bindir" => self.bindir = PathBuf::from(val),
+            "--sbindir" => self.sbindir = PathBuf::from(val),
+            "--libdir" => self.libdir = PathBuf::from(val),
+            "--libexecdir" => self.libexecdir = PathBuf::from(val),
+            "--includedir" => self.includedir = PathBuf::from(val),
+            "--datarootdir" => self.datarootdir = PathBuf::from(val),
+            "--datadir" => self.datadir = PathBuf::from(val),
+            "--mandir" => self.mandir = PathBuf::from(val),
+            "--docdir" => self.docdir = PathBuf::from(val),
+            "--infodir" => self.infodir = PathBuf::from(val),
+            "--localedir" => self.localedir = PathBuf::from(val),
+            "--localstatedir" => self.localstatedir = PathBuf::from(val),
+            "--runstatedir" => self.runstatedir = PathBuf::from(val),
+            "--sharedstatedir" => self.sharedstatedir = PathBuf::from(val),
+            "--sysconfdir" => self.sysconfdir = PathBuf::from(val),
+            _ => return Err(()),
+        }
+
+        Ok(())
     }
 
     pub fn canonicalize(mut self) -> Result<Self, CanonicalizationError> {
@@ -343,14 +376,17 @@ impl InstallDirs {
         }
     }
 
-    pub fn canonicalize_dir<S: AsRef<OsStr>+?Sized,T: Into<PathBuf>>(base: &S,dir: T)->PathBuf{
+    pub fn canonicalize_dir<S: AsRef<OsStr> + ?Sized, T: Into<PathBuf>>(
+        base: &S,
+        dir: T,
+    ) -> PathBuf {
         let mut dir = dir.into();
-        if !dir.has_root(){
-             dir = {
+        if !dir.has_root() {
+            dir = {
                 let mut path = PathBuf::from(base);
                 path.push(dir);
                 path
-             }
+            }
         }
         dir
     }
