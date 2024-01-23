@@ -1,6 +1,6 @@
 [package]
 name = "install-dirs"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Connor Horman <chorman64@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -15,4 +15,4 @@ Library for handling gnu install directories in rust
 
 
 [dependencies]
-serde = {optional = true,version="1.0.123, <=1.0.171"}
+serde = {optional = true,version="1.0.123"}
